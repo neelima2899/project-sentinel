@@ -1,0 +1,35 @@
+﻿# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# JavaScript
+node_modules/
+dist/
+.vite/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*
+*secret*
+
+# Temporary files and backups
+*.log
+*.bak
+*.before-*
+*checkpoint*
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Historical frontend snapshots
+main.pre-ppo.jsx
