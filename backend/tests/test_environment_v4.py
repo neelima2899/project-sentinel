@@ -1,4 +1,4 @@
-
+﻿
 import numpy as np
 import pytest
 
@@ -67,3 +67,47 @@ def test_retreat_increases_distance_in_controlled_state():
     after = np.linalg.norm(env.e - env.p)
 
     assert after > before
+
+def test_power_strike_emits_explicit_hit_event():
+    env = SentinelEnv()
+    env.reset(seed=42)
+
+    # Keep the player away and position the enemy
+    # within the Guardian's Power Strike radius.
+    env.p[:] = [7.0, 7.0]
+    env.g[:] = [0.0, 0.0]
+    env.e[:] = [0.5, 0.0]
+
+    _, _, _, _, info1 = env.step(2)
+    assert info1["power_strike"]["started"] is True
+
+    _, _, _, _, info2 = env.step(2)
+    assert info2["power_strike"]["resolved"] is False
+
+    _, _, _, _, info3 = env.step(2)
+
+    event = info3["power_strike"]
+    assert event["resolved"] is True
+    assert event["hit"] is True
+    assert event["damage"] == 35
+
+    env.close()
+
+
+def test_power_strike_event_resets_each_step():
+    env = SentinelEnv()
+    env.reset(seed=42)
+
+    env.p[:] = [7.0, 7.0]
+    env.g[:] = [0.0, 0.0]
+    env.e[:] = [0.5, 0.0]
+
+    _, _, _, _, info1 = env.step(2)
+    assert info1["power_strike"]["started"] is True
+
+    _, _, _, _, info2 = env.step(2)
+    assert info2["power_strike"]["started"] is False
+    assert info2["power_strike"]["resolved"] is False
+    assert info2["power_strike"]["damage"] == 0
+
+    env.close()

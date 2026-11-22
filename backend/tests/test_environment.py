@@ -1,7 +1,4 @@
-import sys
-from pathlib import Path
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'rl'))
-from environment import SentinelEnv
+from backend.rl.environment import SentinelEnv
 
 def test_rollout():
     env=SentinelEnv()

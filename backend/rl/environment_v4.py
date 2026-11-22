@@ -56,6 +56,7 @@ class SentinelEnv(gym.Env):
         self.power_strike_countdown = 0
         self.power_strike_cooldown = 0
         self.power_strike_active = False
+        self.power_strike_event = {"started": False,"resolved": False,"hit": False,"damage": 0,}
         return self._obs(), {}
 
     def step(self, action):
@@ -64,6 +65,7 @@ class SentinelEnv(gym.Env):
             raise ValueError(f'Invalid action: {action}')
         self.steps += 1
         self.action_counts[action] += 1
+        self.power_strike_event = {"started": False,"resolved": False,"hit": False,"damage": 0,}
         old_hp = self.hp.copy()
         old_distance = np.linalg.norm(self.p-self.e)
 
@@ -152,6 +154,7 @@ class SentinelEnv(gym.Env):
             'steps': self.steps, 'damage': dict(self.damage),
             'action_counts': self.action_counts.tolist(),
             'successful_attacks': self.successful_attacks,
+            'power_strike': dict(self.power_strike_event),
         }
         return self._obs(), float(reward), bool(terminated), bool(truncated), info
     
@@ -160,32 +163,53 @@ class SentinelEnv(gym.Env):
 
         damage = 0
 
-        # A strike is already charging.
+        # Resolve an existing Power Strike.
         if self.power_strike_active:
             self.power_strike_countdown -= 1
 
             if self.power_strike_countdown <= 0:
                 distance = np.linalg.norm(self.g - self.e)
 
-                if self.hp[1] > 0 and distance <= self.POWER_STRIKE_RADIUS:
-                    damage = self.POWER_STRIKE_DAMAGE
-                    self.hp[2] = max(0, self.hp[2] - damage)
+                self.power_strike_event["resolved"] = True
+
+                if (
+                    self.hp[1] > 0
+                    and distance <= self.POWER_STRIKE_RADIUS
+                ):
+                    damage = min(
+                        self.POWER_STRIKE_DAMAGE,
+                        self.hp[2]
+                    )
+
+                    self.hp[2] -= damage
+
+                    self.power_strike_event["hit"] = True
+                    self.power_strike_event["damage"] = damage
 
                 self.power_strike_active = False
-                self.power_strike_cooldown = self.POWER_STRIKE_COOLDOWN
+                self.power_strike_cooldown = (
+                    self.POWER_STRIKE_COOLDOWN
+                )
 
             return damage
 
-        # Wait until the cooldown expires.
+        # Wait for the cooldown.
         if self.power_strike_cooldown > 0:
             self.power_strike_cooldown -= 1
             return damage
 
-        # Start charging if the Guardian is alive and nearby.
+        # Start charging if the Guardian is nearby.
         distance = np.linalg.norm(self.g - self.e)
 
-        if self.hp[1] > 0 and distance <= self.POWER_STRIKE_RADIUS:
+        if (
+            self.hp[1] > 0
+            and distance <= self.POWER_STRIKE_RADIUS
+        ):
             self.power_strike_active = True
-            self.power_strike_countdown = self.POWER_STRIKE_WARNING
+            self.power_strike_countdown = (
+                self.POWER_STRIKE_WARNING
+            )
+
+            self.power_strike_event["started"] = True
 
         return damage

@@ -246,7 +246,24 @@ function App() {
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', blur);
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); };
   }, []);
-  return <main><header><div><span className="eyebrow">AI GAME EXPERIMENT · DAY 3</span><h1>PROJECT <strong>SENTINEL</strong></h1></div><span className="status">● SYSTEM ONLINE</span></header>
+  return <main><header><div><span className="eyebrow">AI GAME EXPERIMENT · DAY 3</span><h1>PROJECT <strong>SENTINEL</strong></h1></div>
+  <span
+    className="status"
+    style={{
+      color:
+        stats.ppoStatus === 'PPO v4 ONLINE'
+          ? '#34d399'
+          : stats.ppoStatus === 'API OFFLINE'
+            ? '#fb7185'
+            : '#fbbf24'
+    }}
+  >
+    ● {stats.ppoStatus === 'PPO v4 ONLINE'
+      ? 'AI SYSTEM ONLINE'
+      : stats.ppoStatus === 'API OFFLINE'
+       ? 'AI SYSTEM OFFLINE'
+        : 'AI CONNECTING'}
+  </span></header>
     <Canvas camera={{ position: [11, 12, 14], fov: 48 }} shadows><Arena keys={keys} resetId={resetId} onStats={setStats}/></Canvas>
     <aside className="hud"><Meter name="PLAYER" value={stats.player} max={100} color="#d9e5ff"/><Meter name="GUARDIAN" value={stats.guardian} max={120} color="#00bfff"/><Meter name="ADVERSARY" value={stats.enemy} max={140} color="#ff3559"/></aside>
     <section className="panel"><h2>MISSION 003</h2><p>{stats.message}</p><p className="muted">WASD / arrows: move · SPACE: attack (close range)</p><button onClick={() => { keys.current.clear(); setResetId(v => v + 1); }}>RESTART MISSION</button> <button onClick={() => setHelp(v => !v)}>{help ? 'HIDE' : 'SHOW'} INFO</button>{help && <p className="hint">Adversary decisions come from a trained PPO v4 model via a local Python API. The model is not learning during gameplay.</p>}
